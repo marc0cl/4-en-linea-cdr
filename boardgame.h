@@ -23,26 +23,30 @@ public:
         char ip[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &(direccionCliente.sin_addr), ip, INET_ADDRSTRLEN);
         std::cout << "Nuevo juego [" << ip << ":" << ntohs(direccionCliente.sin_port) << "]" << std::endl;
-        tablero.reiniciar();
-        char turno = (rand() % 2 == 0) ? 'S' : 'C';
+        tablero.reiniciar(); // Reiniciamos el tablero
+        char turno = (rand() % 2 == 0) ? 'S' : 'C'; // Vemos aleatoriamente quién empieza
         std::string mensaje = "Ingrese un numero para iniciar el juego";
         send(socket_cliente, mensaje.c_str(), mensaje.size(), 0);
         n_bytes = recv(socket_cliente, buffer, 1024, 0);
-        tablero.imprimirTablero(socket_cliente);
+        tablero.imprimirTablero(socket_cliente); // Mostramos el tablero
 
+        // Decimos quién empieza el juego
         if (turno == 'C') {
             std::cout << "Juego [" << ip << ":" << ntohs(direccionCliente.sin_port) << "]: empieza el cliente" << std::endl;
         } else {
             std::cout << "Juego [" << ip << ":" << ntohs(direccionCliente.sin_port) << "]: empieza el servidor" << std::endl;
         }
 
+        // Si hay un error en la conexión
         if (n_bytes <= 0) {
             std::cout << "Error en la conexión, saliendo del juego." << std::endl;
         } else {
+            // Bucle principal del juego
             while (true) {
                 int columna;
                 buffer[n_bytes] = '\0';
                 if (turno == 'C') {
+                    // Turno del cliente
                     mensaje = "Es tu turno, ingrese columna. (1-7) ";
                     send(socket_cliente, mensaje.c_str(), mensaje.size(), 0);
                     n_bytes = recv(socket_cliente, buffer, 1024, 0);
@@ -102,6 +106,7 @@ public:
                     }
                     tablero.imprimirTablero(socket_cliente);
                 } else if (turno == 'S') {
+                    // Turno del servidor
                     mensaje = "Juega el servidor\nEspera tu turno\n";
                     send(socket_cliente, mensaje.c_str(), mensaje.size(), 0);
                     colocarFichaServidor();
@@ -167,6 +172,7 @@ public:
     }
 
 private:
+    // Función para colocar la ficha del servidor
     void colocarFichaServidor() {
         srand(time(NULL));
         bool puesto = false;

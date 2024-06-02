@@ -8,12 +8,13 @@
 
 class Tablero {
 public:
-    static const int filas = 6;
-    static const int columnas = 7;
-    char tablero[filas][columnas];
+    static const int filas = 6; // Número de filas del tablero
+    static const int columnas = 7; // Número de columnas del tablero
+    char tablero[filas][columnas]; // Matriz que representa el tablero
 
+    // Constructor de la clase Tablero
     Tablero() {
-        reiniciar();
+        reiniciar(); // Inicializamos el tablero
     }
 
     void reiniciar() {
@@ -39,7 +40,9 @@ public:
         send(socket_cliente, str_tablero.c_str(), str_tablero.size(), 0);
     }
 
+    // Función para comprobar si hay un ganador
     bool comprobarGanador(char ficha) {
+        // Comprobamos filas
         for (int i = 0; i < filas; i++) {
             for (int j = 0; j <= columnas - 4; j++) {
                 if (tablero[i][j] == ficha && tablero[i][j + 1] == ficha && tablero[i][j + 2] == ficha && tablero[i][j + 3] == ficha) {
@@ -47,6 +50,7 @@ public:
                 }
             }
         }
+        // Comprobamos columnas
         for (int i = 0; i <= filas - 4; i++) {
             for (int j = 0; j < columnas; j++) {
                 if (tablero[i][j] == ficha && tablero[i + 1][j] == ficha && tablero[i + 2][j] == ficha && tablero[i + 3][j] == ficha) {
@@ -54,6 +58,7 @@ public:
                 }
             }
         }
+        // Comprobamos diagonales descendentes
         for (int i = 0; i <= filas - 4; i++) {
             for (int j = 0; j <= columnas - 4; j++) {
                 if (tablero[i][j] == ficha && tablero[i + 1][j + 1] == ficha && tablero[i + 2][j + 2] == ficha && tablero[i + 3][j + 3] == ficha) {
@@ -61,6 +66,7 @@ public:
                 }
             }
         }
+        // Comprobamos diagonales ascendentes
         for (int i = 0; i <= filas - 4; i++) {
             for (int j = 3; j < columnas; j++) {
                 if (tablero[i][j] == ficha && tablero[i + 1][j - 1] == ficha && tablero[i + 2][j - 2] == ficha && tablero[i + 3][j - 3] == ficha) {
