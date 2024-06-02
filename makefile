@@ -4,8 +4,6 @@ LDFLAGS = -lpthread
 
 CLIENT_SRC = client.cpp
 SERVER_SRC = server.cpp
-TABLERO_SRC = board.cpp
-MITABLERO_SRC = boardgame.cpp
 
 CLIENT_OBJ = $(CLIENT_SRC:.cpp=.o)
 SERVER_OBJ = $(SERVER_SRC:.cpp=.o)
@@ -24,6 +22,9 @@ $(SERVER_EXEC): $(SERVER_OBJ) $(TABLERO_OBJ) $(MITABLERO_OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(TABLERO_OBJ): $(TABLERO_SRC)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:

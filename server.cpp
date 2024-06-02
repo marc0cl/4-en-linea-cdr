@@ -1,4 +1,4 @@
-#include "Boardgame.h"
+#include "boardgame.h"
 #include <iostream>
 #include <cstring>
 #include <sys/socket.h>

@@ -1,7 +1,7 @@
 #ifndef BOARDGAME_H
 #define BOARDGAME_H
 
-#include "Board.h"
+#include "board.h"
 #include <iostream>
 #include <cstring>
 #include <sys/socket.h>
