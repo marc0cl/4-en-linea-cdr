@@ -24,6 +24,7 @@ Esto permitirá ejecutar los comandos de servidor y cliente
 ./servidor <Puerto>
 ```
 
+### Cliente
 ```bash
 ./cliente <IP local> <Puerto>
 ```
