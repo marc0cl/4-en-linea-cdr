@@ -1,6 +1,6 @@
-# Juego de Conecta 4 - README
+# Uso de sockets con juego Conecta 4
 
-Este es un simple juego de Conecta 4 implementado en C++, donde un servidor y uno o más clientes pueden conectarse para jugar.
+Este repositorio contiene el uso de sockets concurrentes en C++ con el juego Conecta 4.
 
 ## Requisitos
 
