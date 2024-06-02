@@ -13,3 +13,17 @@ Para compilar el juego, simplemente ejecuta el comando `make` en tu terminal. Es
 
 ```bash
 make
+```
+
+## Ejecución
+
+Esto permitirá ejecutar los comandos de servidor y cliente
+
+### Servidor
+```bash
+./servidor <Puerto>
+```
+
+```bash
+./cliente <IP local> <Puerto>
+```
