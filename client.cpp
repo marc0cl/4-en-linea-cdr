@@ -1,110 +1,101 @@
 #include <iostream>
+#include <cstring>
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#include <string.h>
 
 using namespace std;
 
-void print_board(const char* board_str) {
-    // Imprimir el tablero con guiones bajos para espacios vacíos y representar las jugadas con 'S' para el servidor y 'C' para el cliente
-    for(int i = 0; board_str[i] != '\0'; i++) {
-        if(board_str[i] == '.')
-            cout << '_'; // Guion bajo para espacios vacíos
-        else
-            cout << board_str[i];
-    }
-    cout << endl; // Agregar un salto de línea al final del tablero
-}
+class MiCliente {
+private:
+    int mi_socket;
+    struct sockaddr_in servidor;
+    const int tam_buffer = 1024;
 
-void jugar(int socket_server) {
-    char buffer[1024];
-    int n_bytes = 0;
-
-    while (true) {
-        memset(buffer, '\0', sizeof(char) * 1024);
-        n_bytes = recv(socket_server, buffer, 1024, 0);
-        
-        if (n_bytes <= 0) {
-            cerr << "Error al recibir datos del servidor" << endl;
-            break;
+public:
+    MiCliente(const string &ip, int puerto) {
+        mi_socket = socket(AF_INET, SOCK_STREAM, 0);
+        if (mi_socket == -1) {
+            throw runtime_error("Error al crear el socket.");
         }
-        
-        buffer[n_bytes] = '\0';
-        if (strncmp(buffer, "WIN", 3) == 0) {
-            cout << "Has ganado!" << endl;
-            break;
-        } else if (strncmp(buffer, "LOSE", 4) == 0) {
-            cout << "Has perdido!" << endl;
-            break;
-        } else if (strncmp(buffer, "DRAW", 4) == 0) {
-            cout << "Es un empate!" << endl;
-            break;
-        } else if (strncmp(buffer, "INVALID", 7) == 0) {
-            cout << "Movimiento no válido. Intente nuevamente." << endl;
-        } else {
-            print_board(buffer);
-            cout << "Ingrese la columna (1-7) o 'Q' para salir: ";
-            string input;
-            cin >> input;
 
-            if (input == "Q") {
-                send(socket_server, input.c_str(), input.length(), 0);
-                cout << "Saliendo del juego..." << endl;
+        servidor.sin_addr.s_addr = inet_addr(ip.c_str());
+        servidor.sin_family = AF_INET;
+        servidor.sin_port = htons(puerto);
+
+        if (connect(mi_socket, (struct sockaddr *)&servidor, sizeof(servidor)) < 0) {
+            throw runtime_error("No se pudo conectar.");
+        }
+
+        cout << "Conectado al servidor en " << ip << ":" << puerto << "." << endl;
+    }
+
+    ~MiCliente() {
+        close(mi_socket);
+        cout << "Conexión cerrada." << endl;
+    }
+
+    void comunicarConServidor() {
+        char buffer[tam_buffer];
+        fd_set conjunto_lectura;
+        struct timeval temporizador;
+
+        while (true) {
+            FD_ZERO(&conjunto_lectura);
+            FD_SET(mi_socket, &conjunto_lectura);
+            FD_SET(STDIN_FILENO, &conjunto_lectura);
+
+            temporizador.tv_sec = 5;
+            temporizador.tv_usec = 0;
+
+            int actividad = select(mi_socket + 1, &conjunto_lectura, NULL, NULL, &temporizador);
+
+            if (actividad < 0) {
+                cout << "Error en select." << endl;
                 break;
-            } else if (input.length() == 1 && isdigit(input[0]) && input[0] >= '1' && input[0] <= '7') {
-                string command = "C " + input;
-                send(socket_server, command.c_str(), command.length(), 0);
-                // Después de enviar el movimiento del cliente, recibir y mostrar el tablero actualizado
-                memset(buffer, '\0', sizeof(char) * 1024);
-                n_bytes = recv(socket_server, buffer, 1024, 0);
-                if (n_bytes > 0) {
-                    buffer[n_bytes] = '\0';
-                    print_board(buffer);
+            }
+
+            if (FD_ISSET(mi_socket, &conjunto_lectura)) {
+                memset(buffer, 0, tam_buffer);
+                int len = recv(mi_socket, buffer, tam_buffer - 1, 0);
+                if (len > 0) {
+                    cout << buffer << endl;
+                } else {
+                    cout << "El servidor cerró la conexión." << endl;
+                    break;
                 }
-            } else {
-                cout << "Entrada no válida. Intente nuevamente." << endl;
+            }
+
+            if (FD_ISSET(STDIN_FILENO, &conjunto_lectura)) {
+                cout << " ";
+                string entrada;
+                getline(cin, entrada);
+
+                if (!entrada.empty()) {
+                    send(mi_socket, entrada.c_str(), entrada.length(), 0);
+                    if (entrada == "salir") {
+                        cout << "Cerrando la conexión..." << endl;
+                        break;
+                    }
+                }
             }
         }
     }
-    close(socket_server);
-}
+};
 
-int main(int argc, char **argv) {
+int main(int argc, char *argv[]) {
     if (argc != 3) {
-        cout << "Uso: " << argv[0] << " <direccion IP> <puerto>" << endl;
+        cerr << "Uso: " << argv[0] << " <IP> <puerto>" << endl;
         return 1;
     }
 
-    char *ip = argv[1];
-    int port = atoi(argv[2]);
-    int socket_server;
-    struct sockaddr_in direccionServidor;
-
-    cout << "Creating socket ...\n";
-    if ((socket_server = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        cout << "Error creating socket\n";
-        exit(EXIT_FAILURE);
+    try {
+        MiCliente cliente(argv[1], atoi(argv[2]));
+        cliente.comunicarConServidor();
+    } catch (const exception &e) {
+        cerr << e.what() << endl;
+        return 1;
     }
 
-    cout << "Configuring socket address structure ...\n";
-    memset(&direccionServidor, 0, sizeof(direccionServidor));
-    direccionServidor.sin_family = AF_INET;
-    direccionServidor.sin_port = htons(port);
-
-    if (inet_pton(AF_INET, ip, &direccionServidor.sin_addr) <= 0) {
-        cout << "Invalid address/ Address not supported\n";
-        return -1;
-    }
-
-    cout << "Connecting to the server ...\n";
-    if (connect(socket_server, (struct sockaddr *)&direccionServidor, sizeof(direccionServidor)) < 0) {
-        cout << "Connection failed\n";
-        return -1;
-    }
-
-    jugar(socket_server);
-
-    close(socket_server);
     return 0;
 }
